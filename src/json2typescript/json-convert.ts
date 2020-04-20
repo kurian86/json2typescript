@@ -646,40 +646,42 @@ export class JsonConvert {
 
         let classInstancePropertyValue: any = dataObject[classPropertyName];
 
+        if (customConverter !== null) {
+            json[jsonPropertyName] = customConverter.serialize(classInstancePropertyValue);
+        } else {
+            // Check if the class property value exists
+            if (typeof (classInstancePropertyValue) === "undefined") {
 
-        // Check if the class property value exists
-        if (typeof (classInstancePropertyValue) === "undefined") {
+                if (isOptional || this._ignoreRequiredCheck) return;
 
-            if (isOptional || this._ignoreRequiredCheck) return;
+                throw new Error(
+                    "Fatal error in JsonConvert. " +
+                    "Failed to map the JavaScript instance of class \"" + instance[Settings.CLASS_IDENTIFIER] + "\" to JSON because the defined class property \"" + classPropertyName + "\" does not exist or is not defined:\n\n" +
+                    "\tClass property: \n\t\t" + classPropertyName + "\n\n" +
+                    "\tJSON property: \n\t\t" + jsonPropertyName + "\n\n"
+                );
+            }
 
-            throw new Error(
-                "Fatal error in JsonConvert. " +
-                "Failed to map the JavaScript instance of class \"" + instance[Settings.CLASS_IDENTIFIER] + "\" to JSON because the defined class property \"" + classPropertyName + "\" does not exist or is not defined:\n\n" +
-                "\tClass property: \n\t\t" + classPropertyName + "\n\n" +
-                "\tJSON property: \n\t\t" + jsonPropertyName + "\n\n"
-            );
-        }
-
-
-        // Check if the property is optional
-        // If the json value is null, we don't assign it in that case
-        if (isOptional && classInstancePropertyValue === null) return;
+            // Check if the property is optional
+            // If the json value is null, we don't assign it in that case
+            if (isOptional && classInstancePropertyValue === null) return;
 
 
-        // Map the property
-        try {
-            json[jsonPropertyName] = customConverter !== null ? customConverter.serialize(classInstancePropertyValue) : this.verifyProperty(expectedJsonType, classInstancePropertyValue, true);
-        } catch (e) {
-            throw new Error(
-                "Fatal error in JsonConvert. " +
-                "Failed to map the JavaScript instance of class \"" + instance[Settings.CLASS_IDENTIFIER] + "\" to JSON because of a type error.\n\n" +
-                "\tClass property: \n\t\t" + classPropertyName + "\n\n" +
-                "\tClass property value: \n\t\t" + classInstancePropertyValue + "\n\n" +
-                "\tExpected type: \n\t\t" + this.getExpectedType(expectedJsonType) + "\n\n" +
-                "\tRuntime type: \n\t\t" + this.getTrueType(classInstancePropertyValue) + "\n\n" +
-                "\tJSON property: \n\t\t" + jsonPropertyName + "\n\n" +
-                e.message + "\n"
-            );
+            // Map the property
+            try {
+                json[jsonPropertyName] = this.verifyProperty(expectedJsonType, classInstancePropertyValue, true);
+            } catch (e) {
+                throw new Error(
+                    "Fatal error in JsonConvert. " +
+                    "Failed to map the JavaScript instance of class \"" + instance[Settings.CLASS_IDENTIFIER] + "\" to JSON because of a type error.\n\n" +
+                    "\tClass property: \n\t\t" + classPropertyName + "\n\n" +
+                    "\tClass property value: \n\t\t" + classInstancePropertyValue + "\n\n" +
+                    "\tExpected type: \n\t\t" + this.getExpectedType(expectedJsonType) + "\n\n" +
+                    "\tRuntime type: \n\t\t" + this.getTrueType(classInstancePropertyValue) + "\n\n" +
+                    "\tJSON property: \n\t\t" + jsonPropertyName + "\n\n" +
+                    e.message + "\n"
+                );
+            }
         }
     }
 
